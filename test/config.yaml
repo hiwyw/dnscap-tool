@@ -1,0 +1,209 @@
+input_type: file
+capture_files:
+  - data.pcap
+device_name: any
+bpf_filter: udp and port 53
+decode_worker_count: 4
+handler_worker_count: 2
+middleware_handlers:
+  - delay
+  - ipinfo
+  - tunnel_sec
+  - traffic_direction
+result_handlers:
+  - dnslog
+  - dnsdb
+delay:
+  enable: true
+  session_cache_size: 100000
+ipinfo:
+  enable: true
+  geoip_filename: addr.csv
+tunnel_sec:
+  enable: true
+  special_tlds:
+    - in-addr.arpa
+    - ip6.arpa
+    - edu.cn
+    - gov.cn
+    - com.cn
+    - net.cn
+    - org.cn
+    - ac.cn
+    - edu.hk
+    - edu.mo
+    - edu.tw
+    - edu.mn
+    - edu.kp
+    - ac.kr
+    - ac.jp
+    - edu.ph
+    - edu.vn
+    - edu.la
+    - edu.kh
+    - edu.mm
+    - ac.th
+    - edu.my
+    - edu.bn
+    - edu.sg
+    - ac.id
+    - edu.tl
+    - edu.np
+    - edu.bt
+    - edu.bd
+    - ac.bd
+    - edu.in
+    - ac.in
+    - edu.pk
+    - ac.lk
+    - edu.mv
+    - edu.kz
+    - edu.kg
+    - edu.uz
+    - edu.tm
+    - edu.af
+    - edu.iq
+    - ac.ir
+    - edu.sy
+    - edu.jo
+    - edu.lb
+    - ac.il
+    - edu.ps
+    - edu.sa
+    - edu.bh
+    - edu.qa
+    - ac.ae
+    - edu.om
+    - edu.ye
+    - edu.ge
+    - edu.az
+    - edu.tr
+    - ac.cy
+    - edu.ee
+    - edu.lv
+    - edu.by
+    - edu.ru
+    - ac.ru
+    - edu.ua
+    - edu.md
+    - edu.pl
+    - edu.sk
+    - ac.at
+    - ac.uk
+    - edu.ie
+    - ac.be
+    - edu.ro
+    - ac.rs
+    - edu.mk
+    - edu.al
+    - edu.gr
+    - edu.me
+    - ac.me
+    - edu.mt
+    - edu.ba
+    - edu.it
+    - edu.es
+    - edu.pt
+    - edu.gi
+    - edu.mx
+    - edu.gl
+    - edu.gt
+    - edu.bz
+    - edu.sv
+    - edu.hn
+    - edu.ni
+    - ac.cr
+    - ac.pa
+    - edu.bs
+    - edu.cu
+    - edu.jm
+    - edu.ht
+    - edu.ag
+    - edu.dm
+    - edu.lc
+    - edu.jm
+    - edu.bb
+    - edu.tt
+    - edu.vg
+    - ac.tc
+    - edu.ky
+    - edu.co
+    - edu.ve
+    - edu.gy
+    - edu.ec
+    - edu.pe
+    - edu.bo
+    - edu.br
+    - edu.ar
+    - edu.uy
+    - edu.au
+    - ac.nz
+    - edu.ki
+    - ac.pg
+    - edu.sb
+    - edu.vu
+    - ac.fj
+    - edu.ws
+    - edu.to
+    - edu.ck
+    - edu.nu
+    - edu.eg
+    - edu.ly
+    - edu.dz
+    - ac.ma
+    - edu.es
+    - edu.sd
+    - edu.et
+    - edu.so
+    - edu.dj
+    - ac.ke
+    - ac.tz
+    - ac.ug
+    - ac.rw
+    - edu.bi
+    - ac.sc
+    - edu.cd
+    - edu.sn
+    - edu.gm
+    - edu.ml
+    - ac.pg
+    - edu.cv
+    - edu.sl
+    - edu.lr
+    - edu.ci
+    - edu.gh
+    - edu.ng
+    - edu.zm
+    - ac.zm
+    - ac.zw
+    - ac.mw
+    - ac.mz
+    - ac.bw
+    - edu.na
+    - ac.za
+    - ac.ls
+    - edu.mg
+    - ac.mu
+  enable_subdomain_entropy: true
+  enable_subdomain_encoding_detect: true
+  encoding_detect_least_label_length: 16
+traffic_direction:
+  enable: true
+  self_ips:
+    - 192.168.134.200
+dnslog:
+  enable: true
+  filename: result/dnslog.log
+  max_file_size: 3000
+  max_file_count: 10
+  max_file_age: 10
+dnsdb:
+  enable: true
+  filename: result/dnslog.db
+  max_file_row_count: 100000000
+  max_file_count: 10
+  max_rolling_interval: 24h
+enable_debug: false
+status_report_interval: 3s
+pprof_enable: false
+pprof_http_port: 8000
