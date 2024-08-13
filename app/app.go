@@ -144,9 +144,9 @@ func NewApp(cfg *config.Config) *App {
 		}
 	}
 
-	if len(a.resultHandlers) < 1 {
-		logger.Fatalf("should at least one result handler")
-	}
+	// if len(a.resultHandlers) < 1 {
+	// 	logger.Fatalf("should at least one result handler")
+	// }
 
 	statusTickerDuration, err := time.ParseDuration(a.cfg.StatusReportInterval)
 	if err != nil {

@@ -12,18 +12,19 @@ import (
 )
 
 const (
-	batchWriteTimeout = time.Second * 1
+	batchWriteTimeout = time.Second * 3
 
 	recviceBufferLength = 10
 	writerBuffSize      = 1024 * 8
 )
 
 type LogHandler struct {
-	ctx       context.Context
-	finalizer func()
-	writer    *lumberjack.Logger
-	buffer    *bufio.Writer
-	ch        chan *types.DnsEvent
+	ctx           context.Context
+	finalizer     func()
+	writer        *lumberjack.Logger
+	buffer        *bufio.Writer
+	ch            chan string
+	lastFlushTime time.Time
 }
 
 func NewHandler(ctx context.Context, filename string, maxsize, fileCount, fileAge int, finalizer func()) *LogHandler {
@@ -37,7 +38,7 @@ func NewHandler(ctx context.Context, filename string, maxsize, fileCount, fileAg
 			MaxAge:     fileAge,
 			Compress:   true,
 		},
-		ch: make(chan *types.DnsEvent, recviceBufferLength),
+		ch: make(chan string, recviceBufferLength),
 	}
 	h.buffer = bufio.NewWriterSize(h.writer, writerBuffSize)
 
@@ -48,17 +49,16 @@ func NewHandler(ctx context.Context, filename string, maxsize, fileCount, fileAg
 func (h *LogHandler) loop() {
 	for {
 		select {
-		case l, ok := <-h.ch:
+		case s, ok := <-h.ch:
 			if !ok {
-				h.buffer.Flush()
+				h.flush()
 				logger.Infof("dnslog handler exiting")
 				return
 			}
-			h.handle(l)
-		case <-time.After(batchWriteTimeout):
-			h.buffer.Flush()
+			h.write(s)
 		case <-h.ctx.Done():
-			h.buffer.Flush()
+			h.flush()
+			close(h.ch)
 			logger.Infof("dnslog handler exiting by recvice signal")
 			h.finalizer()
 			logger.Infof("dnslog handler finalizer succeed")
@@ -68,17 +68,26 @@ func (h *LogHandler) loop() {
 }
 
 func (h *LogHandler) Handle(e *types.DnsEvent) {
-	h.ch <- e
+	h.ch <- e.JsonString() + "\n"
 }
 
-func (h *LogHandler) handle(e *types.DnsEvent) {
-	if _, err := h.buffer.WriteString(e.JsonString() + "\n"); err != nil {
+func (h *LogHandler) write(s string) {
+	if _, err := h.buffer.WriteString(s); err != nil {
 		logger.Fatal(err)
 	}
 
 	if h.buffer.Available() < 1024*2 {
-		if err := h.buffer.Flush(); err != nil {
-			logger.Fatal(err)
-		}
+		h.flush()
 	}
+
+	if time.Since(h.lastFlushTime) > batchWriteTimeout {
+		h.flush()
+	}
+}
+
+func (h *LogHandler) flush() {
+	if err := h.buffer.Flush(); err != nil {
+		logger.Fatal(err)
+	}
+	h.lastFlushTime = time.Now()
 }

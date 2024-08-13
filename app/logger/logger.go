@@ -13,7 +13,7 @@ var (
 
 func init() {
 	hook := lumberjack.Logger{
-		Filename:   "dnscap-go.log",
+		Filename:   "dnscap-tool.log",
 		MaxSize:    50,
 		MaxBackups: 10,
 	}

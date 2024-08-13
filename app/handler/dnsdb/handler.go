@@ -161,9 +161,7 @@ func (w *DbRollingWriter) Roll() error {
 
 	go w.checkCountAndRemoveIfNeed()
 
-	if err := w.initNew(); err != nil {
-		return err
-	}
+	w.initNew()
 	return nil
 }
 
@@ -229,7 +227,7 @@ func (w *DbRollingWriter) checkCountAndRemoveIfNeed() {
 	logger.Infof("remove file %s succeed due to reached max file count %d", toDelete, w.maxFileCount)
 }
 
-func (w *DbRollingWriter) initNew() error {
+func (w *DbRollingWriter) initNew() {
 	var sql string = `CREATE TABLE IF NOT EXISTS dnsevent (
     EventTime DATETIME,
     SourceIP VARCHAR,
@@ -322,23 +320,22 @@ func (w *DbRollingWriter) initNew() error {
 		return err
 	})
 	if err != nil {
-		return err
+		logger.Fatal(err)
 	}
 	w.connector = connector
 
 	conn, err := connector.Connect(context.Background())
 	if err != nil {
-		return err
+		logger.Fatal(err)
 	}
 	w.connection = conn
 
 	appender, err := duckdb.NewAppenderFromConn(conn, "", tableName)
 	if err != nil {
-		return err
+		logger.Fatal(err)
 	}
 	w.appender = appender
 	w.beginAt = time.Time{}
 	w.lastUpdateAt = time.Time{}
 	w.wroteRowCount = 0
-	return nil
 }
