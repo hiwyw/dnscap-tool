@@ -6,14 +6,14 @@ bpf_filter: udp and port 53
 decode_worker_count: 4
 handler_worker_count: 2
 middleware_handlers:
-  - delay
+  - session
   - ipinfo
   - tunnel_sec
   - traffic_direction
 result_handlers:
   - dnslog
   - dnsdb
-delay:
+session:
   enable: true
   session_cache_size: 100000
 ipinfo:

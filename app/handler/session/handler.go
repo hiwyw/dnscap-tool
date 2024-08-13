@@ -1,4 +1,4 @@
-package delay
+package session
 
 import (
 	"context"
@@ -25,39 +25,48 @@ type Handler struct {
 }
 
 func (h *Handler) Handle(e *types.DnsEvent) *types.DnsEvent {
-	k := SessionKey{
-		SrcIP:   e.SourceIP,
-		DstIP:   e.DestinationIP,
-		SrcPort: e.SourcePort,
-		DstPort: e.DestinationPort,
-		TransID: e.TranscationID,
-	}
-
-	if !e.Response {
-		if ok := h.sessionManager.Add(k, SessionValue{
-			QueryTime: e.EventTime,
-			QueryType: e.QueryType,
+	switch e.Response {
+	case false:
+		k := SessionKey{
+			SrcIP:     e.SourceIP,
+			DstIP:     e.DestinationIP,
+			SrcPort:   e.SourcePort,
+			DstPort:   e.DestinationPort,
+			TransID:   e.TranscationID,
 			Domain:    e.Domain,
+			QueryType: e.QueryType,
+		}
+
+		if ok := h.sessionManager.Add(k, SessionValue{
+			QueryTime:  e.EventTime,
+			ByteLength: e.ByteLength,
 		}); ok {
-			logger.Debugf("session cache full %d", h.sessionManager.c.Len())
+			logger.Infof("session cache full %d", h.sessionManager.c.Len())
 		}
 		return e
-	}
+	case true:
+		k := SessionKey{
+			SrcIP:     e.DestinationIP,
+			DstIP:     e.SourceIP,
+			SrcPort:   e.DestinationPort,
+			DstPort:   e.SourcePort,
+			TransID:   e.TranscationID,
+			Domain:    e.Domain,
+			QueryType: e.QueryType,
+		}
 
-	v, ok := h.sessionManager.Get(k)
-	if !ok {
-		logger.Debugf("session fetch failed due to not found, domain: %s, key: %v", e.Domain, k)
+		v, ok := h.sessionManager.Get(k)
+		if !ok {
+			logger.Debugf("session fetch failed due to not found: %v", k)
+			return e
+		}
+
+		e.ExecMiddlewareFunc(func(e *types.DnsEvent) {
+			e.DelayMicrosecond = e.EventTime.Sub(v.QueryTime).Microseconds()
+			e.QueryByteLength = v.ByteLength
+		})
 		return e
 	}
-
-	if e.QueryType != v.QueryType || e.Domain != v.Domain {
-		logger.Debugf("session fetch failed by querytype or domain not match, event: [%s %s], cache: [%s %s]", e.Domain, e.QueryType, v.Domain, v.QueryType)
-		return e
-	}
-
-	e.ExecMiddlewareFunc(func(e *types.DnsEvent) {
-		e.DelayMicrosecond = e.EventTime.Sub(v.QueryTime).Microseconds()
-	})
 	return e
 }
 
@@ -91,15 +100,16 @@ func (s *SessionCache) Get(k SessionKey) (SessionValue, bool) {
 }
 
 type SessionKey struct {
-	SrcIP   string
-	DstIP   string
-	SrcPort uint16
-	DstPort uint16
-	TransID uint16
+	SrcIP     string
+	DstIP     string
+	SrcPort   uint16
+	DstPort   uint16
+	TransID   uint16
+	Domain    string
+	QueryType string
 }
 
 type SessionValue struct {
-	QueryTime time.Time
-	QueryType string
-	Domain    string
+	QueryTime  time.Time
+	ByteLength uint32
 }

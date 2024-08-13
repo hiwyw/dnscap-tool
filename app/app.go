@@ -13,10 +13,10 @@ import (
 
 	"github.com/hiwyw/dnscap-tool/app/config"
 	"github.com/hiwyw/dnscap-tool/app/handler"
-	"github.com/hiwyw/dnscap-tool/app/handler/delay"
 	"github.com/hiwyw/dnscap-tool/app/handler/dnsdb"
 	"github.com/hiwyw/dnscap-tool/app/handler/dnslog"
 	"github.com/hiwyw/dnscap-tool/app/handler/ipinfo"
+	"github.com/hiwyw/dnscap-tool/app/handler/session"
 	td "github.com/hiwyw/dnscap-tool/app/handler/trafficdirection"
 	"github.com/hiwyw/dnscap-tool/app/handler/tunnelsec"
 	"github.com/hiwyw/dnscap-tool/app/logger"
@@ -67,14 +67,14 @@ func NewApp(cfg *config.Config) *App {
 
 	for _, h := range a.cfg.MiddlewareHandlers {
 		switch h {
-		case config.DelayType:
-			if a.cfg.DelayConfig.Enable {
+		case config.SessionType:
+			if a.cfg.SessionConfig.Enable {
 				a.middlewareHandlers = append(
 					a.middlewareHandlers,
-					delay.NewHandler(
+					session.NewHandler(
 						childCtx,
-						a.cfg.DelayConfig.SessionCacheSize))
-				logger.Warnf("when delay handler enabled, dns events cannot be processed in parallel， so will reset worker count to 1")
+						a.cfg.SessionConfig.SessionCacheSize))
+				logger.Warnf("when session handler enabled, dns events cannot be processed in parallel， so will reset worker count to 1")
 				a.source.SetWorkerCount(1)
 				a.pool.Tune(1)
 
@@ -144,9 +144,9 @@ func NewApp(cfg *config.Config) *App {
 		}
 	}
 
-	// if len(a.resultHandlers) < 1 {
-	// 	logger.Fatalf("should at least one result handler")
-	// }
+	if len(a.resultHandlers) < 1 {
+		logger.Fatalf("should at least one result handler")
+	}
 
 	statusTickerDuration, err := time.ParseDuration(a.cfg.StatusReportInterval)
 	if err != nil {

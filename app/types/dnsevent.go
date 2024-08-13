@@ -46,6 +46,7 @@ type DnsEvent struct {
 	// 隧道安全属性
 	SecondLevelDomain     string  `yaml:"SecondLevelDomain"`
 	ByteLength            uint32  `json:"ByteLength"`
+	QueryByteLength       uint32  `json:"QueryByteLength"`
 	SubdomainByteLength   uint32  `json:"SubdomainByteLength"`
 	LabelCount            uint32  `json:"LabelCount"`
 	SubdomainLabelCount   uint32  `json:"SubdomainLabelCount"`

@@ -18,7 +18,7 @@ middleware_handlers:  # 程序加载的中间件插件列表，请保持默认
 result_handlers: # 程序加载的结果插件列表，请保持默认
   - dnslog
   - dnsdb
-delay: # 解析时延插件，通过匹配五元组+transcation id的方式建立会话表，并以此计算解析时延，注意使用该插件时，程序不支持多线程并行处理，decode_worker_count和handler_worker_count会被设置为1
+session: # 会话插件，通过匹配五元组+transcation id的方式建立会话表，并以此计算解析时延及请求包大小，注意使用该插件时，程序不支持多线程并行处理，decode_worker_count和handler_worker_count会被设置为1
   enable: false # 插件功能开关
   session_cache_size: 100000  # 会话表缓存大小，保持默认即可
 ipinfo: # ip信息插件
@@ -145,7 +145,8 @@ subnet,country,province,city,county,isp,dc,app,custom
     "Custom": ""
   },
   "SecondLevelDomain": "azure.com.",
-  "ByteLength": 129,
+  "ByteLength": 30,
+  "QueryByteLength": 129,
   "SubdomainByteLength": 34,
   "LabelCount": 6,
   "SubdomainLabelCount": 4,
@@ -157,6 +158,7 @@ subnet,country,province,city,county,isp,dc,app,custom
 仅解释部分字段含义：
 * 域名所属二级域: `"SecondLevelDomain": "azure.com.",`
 * 数据包大小: `"ByteLength": 129,`
+* 请求数据包大小: `"QueryByteLength": 129,`，仅在响应包事件中存在，用于计算请求响应比判断是否为隧道流量
 * 子域名字节数: `"SubdomainByteLength": 34,`
 * 域名总标签数: `"LabelCount": 6,`
 * 子域名标签数: `"SubdomainLabelCount": 4,`

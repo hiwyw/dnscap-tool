@@ -33,7 +33,7 @@ func Generate(fp string) {
 		DecodeWorkerCount:  1,
 		HandlerWorkerCount: 1,
 		MiddlewareHandlers: []MiddlewareHandlerType{
-			DelayType,
+			SessionType,
 			IpInfoType,
 			TunnelSecType,
 			TrafficDirectionType,
@@ -42,7 +42,7 @@ func Generate(fp string) {
 			DnsLogWriterType,
 			DbWriterType,
 		},
-		DelayConfig: DelayConfig{
+		SessionConfig: SessionConfig{
 			Enable:           true,
 			SessionCacheSize: 100000,
 		},
@@ -110,7 +110,7 @@ type Config struct {
 	HandlerWorkerCount     int                     `yaml:"handler_worker_count"`
 	MiddlewareHandlers     []MiddlewareHandlerType `yaml:"middleware_handlers"`
 	ResultHandlers         []ResultHandlerType     `yaml:"result_handlers"`
-	DelayConfig            DelayConfig             `yaml:"delay"`
+	SessionConfig          SessionConfig           `yaml:"session"`
 	IpInfoConfig           IpInfoConfig            `yaml:"ipinfo"`
 	TunnelSecConfig        TunnelSecConfig         `yaml:"tunnel_sec"`
 	TrafficDirectionConfig TrafficDirectionConfig  `yaml:"traffic_direction"`
@@ -125,7 +125,7 @@ type Config struct {
 type MiddlewareHandlerType string
 
 const (
-	DelayType            MiddlewareHandlerType = "delay"
+	SessionType          MiddlewareHandlerType = "session"
 	IpInfoType           MiddlewareHandlerType = "ipinfo"
 	TunnelSecType        MiddlewareHandlerType = "tunnel_sec"
 	TrafficDirectionType MiddlewareHandlerType = "traffic_direction"
@@ -138,7 +138,7 @@ const (
 	DbWriterType     ResultHandlerType = "dnsdb"
 )
 
-type DelayConfig struct {
+type SessionConfig struct {
 	Enable           bool `yaml:"enable"`
 	SessionCacheSize int  `yaml:"session_cache_size"`
 }
