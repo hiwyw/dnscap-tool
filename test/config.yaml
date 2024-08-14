@@ -197,6 +197,7 @@ dnslog:
   max_file_size: 3000
   max_file_count: 10
   max_file_age: 10
+  format: json
 dnsdb:
   enable: true
   filename: result/dnslog.db

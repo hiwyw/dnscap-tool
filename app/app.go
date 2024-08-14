@@ -121,6 +121,7 @@ func NewApp(cfg *config.Config) *App {
 						a.cfg.DnslogConfig.MaxFileSize,
 						a.cfg.DnslogConfig.MaxFileCount,
 						a.cfg.DnslogConfig.MaxFileAge,
+						string(a.cfg.DnslogConfig.Format),
 						finalizer))
 				a.wg.Add(1)
 			}

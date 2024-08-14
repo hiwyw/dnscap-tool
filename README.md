@@ -42,6 +42,7 @@ dnslog: # dns日志输出插件
   max_file_size: 1000 # 单个dns日志文件大小
   max_file_count: 10 # 最多保留的日志文件数量
   max_file_age: 10 # 最多保留的日志时间，单位天
+  format: json # 输出日志格式，有json和csv可选
 dnsdb: # dns事件数据库输出插件
   enable: false # 插件功能开关
   filename: result/dnslog.db # duckdb数据库文件名
@@ -155,6 +156,7 @@ subnet,country,province,city,county,isp,dc,app,custom
   "TrafficDirection": "recursion_response"
 }
 ```
+
 仅解释部分字段含义：
 * 域名所属二级域: `"SecondLevelDomain": "azure.com.",`
 * 数据包大小: `"ByteLength": 129,`

@@ -69,6 +69,7 @@ func Generate(fp string) {
 			MaxFileSize:  100,
 			MaxFileCount: 10,
 			MaxFileAge:   10,
+			Format:       JsonLogFormat,
 		},
 		DnsdbConfig: DnsdbConfig{
 			Enable:             true,
@@ -162,12 +163,20 @@ type IpInfoConfig struct {
 }
 
 type DnslogConfig struct {
-	Enable       bool   `yaml:"enable"`
-	Filename     string `yaml:"filename"`
-	MaxFileSize  int    `yaml:"max_file_size"`
-	MaxFileCount int    `yaml:"max_file_count"`
-	MaxFileAge   int    `yaml:"max_file_age"`
+	Enable       bool      `yaml:"enable"`
+	Filename     string    `yaml:"filename"`
+	MaxFileSize  int       `yaml:"max_file_size"`
+	MaxFileCount int       `yaml:"max_file_count"`
+	MaxFileAge   int       `yaml:"max_file_age"`
+	Format       LogFormat `yaml:"format"`
 }
+
+type LogFormat string
+
+const (
+	JsonLogFormat LogFormat = "json"
+	CsvLogFormat  LogFormat = "csv"
+)
 
 type DnsdbConfig struct {
 	Enable             bool   `yaml:"enable"`

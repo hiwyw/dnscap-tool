@@ -41,7 +41,7 @@ func (h *Handler) Handle(e *types.DnsEvent) *types.DnsEvent {
 			QueryTime:  e.EventTime,
 			ByteLength: e.ByteLength,
 		}); ok {
-			logger.Infof("session cache full %d", h.sessionManager.c.Len())
+			logger.Debugf("session cache full %d", h.sessionManager.c.Len())
 		}
 		return e
 	case true:
@@ -65,6 +65,8 @@ func (h *Handler) Handle(e *types.DnsEvent) *types.DnsEvent {
 			e.DelayMicrosecond = e.EventTime.Sub(v.QueryTime).Microseconds()
 			e.QueryByteLength = v.ByteLength
 		})
+
+		h.sessionManager.Delete(k)
 		return e
 	}
 	return e
