@@ -107,7 +107,11 @@ func (h *Handler) Handle(e *types.DnsEvent) *types.DnsEvent {
 		return e
 	}
 
-	ecs, _, _ := net.ParseCIDR(e.EdnsClientSubnet)
+	ecs, _, err := net.ParseCIDR(e.EdnsClientSubnet)
+	if err != nil {
+		logger.Errorf("parse ecs cidr failed: %s", e.EdnsClientSubnet)
+		return e
+	}
 	r3, ok := h.search(ecs)
 	if ok {
 		e.ExecMiddlewareFunc(func(e *types.DnsEvent) {

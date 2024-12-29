@@ -7,6 +7,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/panjf2000/ants/v2"
@@ -21,12 +22,6 @@ import (
 	"github.com/hiwyw/dnscap-tool/app/handler/tunnelsec"
 	"github.com/hiwyw/dnscap-tool/app/logger"
 	"github.com/hiwyw/dnscap-tool/app/types"
-)
-
-const (
-	snapshot_len = 1500
-
-	promiscuous = true
 )
 
 func NewApp(cfg *config.Config) *App {
@@ -181,7 +176,7 @@ func newReporter(ctx context.Context, statDuration time.Duration, finalizer func
 	r := &statusReporter{
 		ctx:    ctx,
 		ticker: *time.NewTicker(statDuration),
-		status: &runningStatus{
+		status: &runningState{
 			StartupTime: time.Now(),
 		},
 		finalizer: finalizer,
@@ -193,7 +188,7 @@ func newReporter(ctx context.Context, statDuration time.Duration, finalizer func
 type statusReporter struct {
 	ctx       context.Context
 	ticker    time.Ticker
-	status    *runningStatus
+	status    *runningState
 	finalizer func()
 }
 
@@ -201,10 +196,16 @@ func (r *statusReporter) loop() {
 	for {
 		select {
 		case <-r.ticker.C:
-			r.status.RunningTime = time.Since(r.status.StartupTime).String()
-			r.status.AvgEventRate = r.status.TotalEventCount / uint64(time.Since(r.status.StartupTime).Seconds())
-			s, _ := json.Marshal(r.status)
-			logger.Infof("running status: %s", string(s))
+			s := map[string]interface{}{
+				"startup_time":      r.status.StartupTime,
+				"running_time":      time.Since(r.status.StartupTime).String(),
+				"total_event_count": r.status.TotalEventCount.Load(),
+				"error_event_count": r.status.ErrEventCount.Load(),
+				"avg_event_rate":    r.status.TotalEventCount.Load() / uint64(time.Since(r.status.StartupTime).Seconds()),
+				"latest_event_time": r.status.LatestEventTime.Load().(time.Time),
+			}
+			ss, _ := json.Marshal(s)
+			logger.Infof("running status: %s", string(ss))
 		case <-r.ctx.Done():
 			r.finalizer()
 			return
@@ -212,13 +213,23 @@ func (r *statusReporter) loop() {
 	}
 }
 
-type runningStatus struct {
-	StartupTime     time.Time `json:"startup_time"`
-	RunningTime     string    `json:"running_time"`
-	TotalEventCount uint64    `json:"total_event_count"`
-	ErrEventCount   uint64    `json:"error_event_count"`
-	AvgEventRate    uint64    `json:"avg_event_rate"`
-	LatestEventTime time.Time `json:"latest_event_time"`
+func (r *statusReporter) CountEvent() {
+	r.status.TotalEventCount.Add(1)
+}
+
+func (r *statusReporter) CountErrEvent() {
+	r.status.ErrEventCount.Add(1)
+}
+
+func (r *statusReporter) UpdateLastEventTime(t time.Time) {
+	r.status.LatestEventTime.Store(t)
+}
+
+type runningState struct {
+	StartupTime     time.Time     `json:"startup_time"`
+	TotalEventCount atomic.Uint64 `json:"total_event_count"`
+	ErrEventCount   atomic.Uint64 `json:"error_event_count"`
+	LatestEventTime atomic.Value  `json:"latest_event_time"`
 }
 
 func (a *App) Run() {
@@ -239,14 +250,14 @@ func (a *App) Run() {
 					h2.Handle(e)
 				}
 			})
-			a.reporter.status.TotalEventCount += 1
-			a.reporter.status.LatestEventTime = e.EventTime
+			a.reporter.CountEvent()
+			a.reporter.UpdateLastEventTime(e.EventTime)
 		case _, ok := <-a.source.ErrEvents():
 			if !ok {
 				a.Close()
 				return
 			}
-			a.reporter.status.ErrEventCount += 1
+			a.reporter.CountErrEvent()
 		}
 	}
 }

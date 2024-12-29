@@ -44,7 +44,7 @@ type DnsEvent struct {
 	AnswerIpInfo IpInfo `json:"AnswerIpInfo"`
 
 	// 隧道安全属性
-	SecondLevelDomain     string  `yaml:"SecondLevelDomain"`
+	SecondLevelDomain     string  `json:"SecondLevelDomain"`
 	ByteLength            uint32  `json:"ByteLength"`
 	QueryByteLength       uint32  `json:"QueryByteLength"`
 	SubdomainByteLength   uint32  `json:"SubdomainByteLength"`
@@ -126,8 +126,10 @@ func convertMsgRRs(mrrs []dns.RR) ([]RR, string, string) {
 				optStr := strings.ReplaceAll(opt.String(), "\n", "")
 				edns += optStr
 				for _, o := range opt.Option {
-					if _, ok := o.(*dns.EDNS0_SUBNET); ok {
-						ecs = o.String()
+					if ecsOption, ok := o.(*dns.EDNS0_SUBNET); ok {
+						if ecsOption.Address != nil {
+							ecs = ecsOption.Address.String() + "/" + strconv.Itoa(int(ecsOption.SourceNetmask))
+						}
 					}
 				}
 			} else {

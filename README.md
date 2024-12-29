@@ -192,3 +192,4 @@ subnet,country,province,city,county,isp,dc,app,custom
 * 错误事件数（即解析失败的包数）: `"error_event_count":0`
 * 平均事件处理速率: `"avg_event_rate":202164`
 * 最近事件事件（最近一个dns数据包中的时间）: `"latest_event_time":"2024-06-19T17:34:47.073946+08:00"`
+
