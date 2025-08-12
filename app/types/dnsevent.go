@@ -12,11 +12,14 @@ import (
 type DnsEvent struct {
 	// 常规属性
 	EventTime            time.Time `json:"EventTime"`
+	SourceMac            string    `json:"SourceMac"`
+	DestinationMac       string    `json:"DestinationMac"`
 	SourceIP             string    `json:"SourceIP"`
 	SourcePort           uint16    `json:"SourcePort"`
 	DestinationIP        string    `json:"DestinationIP"`
 	DestinationPort      uint16    `json:"DestinationPort"`
 	TranscationID        uint16    `json:"TranscationID"`
+	Opcode               int32     `json:"Opcode"`
 	View                 string    `json:"View"`
 	Domain               string    `json:"Domain"`
 	QueryClass           string    `json:"QueryClass"`
@@ -86,6 +89,7 @@ func (e *DnsEvent) FromMsg(msg *dns.Msg) {
 		e.QueryType = dns.TypeToString[msg.Question[0].Qtype]
 	}
 
+	e.Opcode = int32(msg.Opcode)
 	e.Rcode = dns.RcodeToString[msg.Rcode]
 	e.Response = msg.Response
 	e.Authoritative = msg.Response

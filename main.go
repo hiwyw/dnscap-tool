@@ -46,7 +46,7 @@ func main() {
 	if showDevices {
 		ifs, err := pcap.FindAllDevs()
 		if err != nil {
-			log.Printf("find all devices failed %s", err)
+			log.Fatalf("find all devices failed %s", err)
 		}
 
 		log.Println("Devices:")
